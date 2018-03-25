@@ -1,0 +1,137 @@
+<!-- CSS stylesheet to ensure that add-ons styling 
+     matches the default Google Docs styles -->
+<link href="https://ssl.gstatic.com/docs/script/css/add-ons.css" rel="stylesheet">
+
+<!-- To add CSS to checkboxes to display each checkbox on new line -->
+<style>
+    #checkboxes {
+        margin: 5px 0 5px 0;
+    }
+    #checkboxes label {
+        display: block
+    }
+    button {
+        display: inline-block;
+    }
+</style>
+
+
+<!-- The sidebar will have check boxes and the submit button -->
+
+<div class="sidebar">
+
+    <!-- The dropdown for scaffolds -->
+    <b>Scaffolds:</b>
+    <select id="scaffoldList">
+<option>Select anyone from below!</option>
+      </select>
+
+    <div class="checkboxes1">
+        <div id='checkboxes'>
+        </div>
+    </div>
+    <div class="button-container">
+        <button class="blue reset" type="reset" id="reset_list">Reset</button>
+        <button class="blue" type="submit" id="load_list">Submit</button>
+    </div>
+
+</div>
+
+
+
+<!-- Load the jQuery library from the Google CDN -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+<script>
+// Getting the scaffold set from the API using the google doc Id
+    google.script.run.withSuccessHandler(function(google_doc_id) {
+        var id = google_doc_id;
+        var json;
+        $.ajax({
+            url: 'https://kf6-test.rit.albany.edu/api/googledocuments/getScaffoldAndSupport/',
+            data: {
+                google_doc_id: '1laMMhWajeixowjsJZrHS6McCePvzOiktlmhQgMrBQYg'
+            },
+            success: function(data) {
+                json = data;
+                $.each(json, function(key, value) {
+                    var option = $('<option />').val(value.title).text(value.title);
+                    $("#scaffoldList").append(option);
+                });
+            },
+            error: function(jqXHR, textStatus, errorThrown){
+               alert("Error -- "+jqXHR.status+ "  " + errorThrown);
+               
+            },
+            type: 'POST'
+        });
+
+    }).getValue();
+
+
+
+    // Attached click handlers after the Sidebar has loaded in Google Docs
+
+    $(function() {
+        $("#load_list").hide(); // hiding the submit button on displaying the sidebar
+        $("#reset_list").hide(); // hiding the reset button on displaying the sidebar
+        
+        //function to display the checkboxes on selecting the scaffold from the dropdown
+
+        $("#scaffoldList").change(function() {
+
+            var $dropdown = $(this);
+            var index = document.getElementById("scaffoldList").selectedIndex;
+            google.script.run.withSuccessHandler(function(google_doc_id) {
+                var id = google_doc_id;
+                var json =
+                    $.ajax({
+                        url: 'https://kf6-test.rit.albany.edu/api/googledocuments/getScaffoldAndSupport/',
+                        data: {
+                            google_doc_id: '1laMMhWajeixowjsJZrHS6McCePvzOiktlmhQgMrBQYg'
+                        },
+                        error: function() {
+                           alert("error")
+                        },
+                        success: function(data) {
+                            json = data;
+                            $("#checkboxes").html(""); // clearing the previously displayed checkboxes
+
+                            // creating checkboxes for each value
+                            var selectedObj = json[index - 1];
+                            var supportArray = selectedObj ? selectedObj.supports : [];
+
+                            $.each(supportArray, function(key, value) {
+                                $("#checkboxes").append("<label><input type='checkbox'  id='mycheckboxes' name='mycheckboxes' value='" + (value.title) + "' class='mycheckboxes'  />" + value.title + "</label>");
+                            });
+                        },
+                        type: 'POST'
+                    });
+            }).getValue();
+            $("#load_list").show(); // displaying the submit button
+            $("#reset_list").show(); // displaying the reset button
+
+        });
+
+        // When a user checks the checkbox on the sidebar, call 
+        // insertList to insert the checked items in the current document
+        $('#load_list').click(function() {
+            var features = [];
+            $.each($("input[name='mycheckboxes']:checked"), function() {
+                features.push($(this).val());
+            });
+            for (var i = features.length - 1; i >= 0; i--) {
+                google.script.run.insertList((features[i]))
+            }
+        });
+
+       // To uncheck the checked checkboxes
+        $(".blue.reset").click(function() {
+            $('input[type=checkbox]').each(function() {
+                this.checked = false;
+            });
+        })
+
+
+    });
+</script>

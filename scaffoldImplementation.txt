@@ -1,0 +1,75 @@
+/*
+Input:
+Output:onOpen() function is called
+Summary:Calls the onOpen() function when the document is opened
+*/
+function onInstall() {
+  onOpen();
+}
+
+/*
+Input: 
+Output: Adds the new option after the document is opened
+Summary:Adds the new option after the document is opened and calls 
+        the showsidebar function to display the sidebar
+*/
+function onOpen() {
+  DocumentApp.getUi()
+  .createAddonMenu() // Adds a new option in the Google Docs Add-ons Menu
+   .addItem("Scaffolds", "showSidebar") // Name of the add-on
+.addToUi();  // Runs the showSidebar function on clicking the option 
+}
+
+/*
+Input: 
+Output: Displays sidebar on the right side of the screen
+Summary: Displays the sidebar 
+*/
+function showSidebar() {
+  var html = HtmlService.createTemplateFromFile("scaffoldView") // Name of the html file
+    .evaluate()
+    .setTitle("Scaffold"); // Sets the title on the sidebar
+  DocumentApp.getUi().showSidebar(html);
+}
+
+/* 
+Input: selected checkbox values
+Output: shows the selected checkbox names on the Google Docs within the yellow brackets
+Summary: Inserts the selected checkbox value on the Google Docs within the yellow brackets
+*/
+function insertList(value) {  
+  var text=HtmlService.createTemplate('<?= input ?>') // Gets the input value 
+  text.input= value
+  var highlightStyle = {};
+  highlightStyle[DocumentApp.Attribute.BORDER_COLOR] = '#EFB137';
+//  highlightStyle[DocumentApp.Attribute.BOLD] = true;
+  var index=text.evaluate().getContent().length+3
+  var cursor=DocumentApp.getActiveDocument()
+     .getCursor()
+     .insertText("["+text.evaluate().getContent()+"- ]" + '\n') // Displays the content on Google Docs at the cursor position
+     .setAttributes(0, 4, highlightStyle)
+     .setForegroundColor(0, 0, "#EFB137") // Sets the color of brackets as yellow for the content on the first line
+     .setForegroundColor(index,index, "#EFB137"); // Sets the color of brackets as yellow for the remaining lines. 
+     
+  var position = DocumentApp.getActiveDocument()
+     .newPosition(cursor, text.evaluate().getContent().length+5 ); // Moves the cursor on next line
+  DocumentApp.getActiveDocument().setCursor(position);// Sets the cursor position
+}
+
+/* 
+Input: 
+Output: returns the document id
+Summary: returns the document id to the client side
+*/
+function doGet(e) {
+   return HtmlService
+      .createTemplateFromFile('scaffoldView') // Name of the html file
+      .evaluate();
+}
+
+function getValue() {
+    var id = DocumentApp.getActiveDocument().getId() ; // Gets the google doc id
+     return id;
+}
+
+
